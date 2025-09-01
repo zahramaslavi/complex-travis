@@ -68,7 +68,7 @@ app.post('/values', async (req, res) => {
       console.log("Already exists!");
       res.send({working: false})
     } else {
-      console.log("Does not exist yet - sending to redis for calculation!");
+      console.log("Does not exist yet - sending to redis for calculation! -----");
       redisClient.hset('values', index, 'Nothing yet!');
       redisPublisher.publish('insert', index);
       pgClient.query('INSERT INTO values(number) VALUES($1)', [index]);
