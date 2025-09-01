@@ -1,0 +1,47 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "containerDefinitions": [
+    {
+      "name": "client",
+      "image": "your-dockerhub-username/your-app-name:latest",
+      "essential": true,
+      "memory": 512,
+      "portMappings": [
+        {
+          "containerPort": 3000
+        }
+      ]
+    },
+    {
+      "name": "client",
+      "image": "zahramaslavi/multi-client",
+      "hostname": "client",
+      "essential": false
+    },
+    {
+      "name": "server",
+      "image": "zahramaslavi/multi-server",
+      "hostname": "api",
+      "essential": false
+    },
+    {
+      "name": "worker",
+      "image": "zahramaslavi/multi-worker",
+      "hostname": "worker",
+      "essential": false
+    },
+    {
+      "name": "nginx",
+      "image": "zahramaslavi/multi-nginx",
+      "hostname": "nginx",
+      "essential": true,
+      "portMappings": [
+        {
+            "hostPort": 80,
+            "containerPort": 80
+        }
+      ],
+      "links": ["client", "server"]
+    }
+  ]
+}

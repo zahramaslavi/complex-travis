@@ -66,54 +66,54 @@ jobs:
           docker push $DH_USER/multi-nginx:$SHA
           docker push $DH_USER/multi-nginx:latest
 
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ secrets.AWS_REGION }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      # # Generate Dockerrun.aws.json with the current SHA tag
-      # - name: Generate Dockerrun.aws.json
-      #   env:
-      #     DH_USER: ${{ secrets.DOCKER_USERNAME }}
-      #     SHA: ${{ github.sha }}
-      #   run: |
-      #     cat > Dockerrun.aws.json <<'JSON'
-      #     {
-      #       "AWSEBDockerrunVersion": 2,
-      #       "containerDefinitions": [
-      #         { "name": "client", "image": "DH_USER/multi-client:SHA", "memory": 128, "hostname": "client" },
-      #         { "name": "server", "image": "DH_USER/multi-server:SHA", "memory": 128, "hostname": "api" },
-      #         { "name": "worker", "image": "DH_USER/multi-worker:SHA", "memory": 128, "hostname": "worker" },
-      #         { "name": "nginx",  "image": "DH_USER/multi-nginx:SHA",  "memory": 128, "hostname": "nginx",
-      #           "portMappings": [{ "hostPort": 80, "containerPort": 80 }], "essential": true }
-      #       ]
-      #     }
-      #     JSON
-      #     sed -i "s/DH_USER/$DH_USER/g" Dockerrun.aws.json
-      #     sed -i "s/SHA/$SHA/g" Dockerrun.aws.json
-      #     cat Dockerrun.aws.json
+      # Generate Dockerrun.aws.json with the current SHA tag
+      - name: Generate Dockerrun.aws.json
+        env:
+          DH_USER: ${{ secrets.DOCKER_USERNAME }}
+          SHA: ${{ github.sha }}
+        run: |
+          cat > Dockerrun.aws.json <<'JSON'
+          {
+            "AWSEBDockerrunVersion": 2,
+            "containerDefinitions": [
+              { "name": "client", "image": "DH_USER/multi-client:SHA", "memory": 128, "hostname": "client" },
+              { "name": "server", "image": "DH_USER/multi-server:SHA", "memory": 128, "hostname": "api" },
+              { "name": "worker", "image": "DH_USER/multi-worker:SHA", "memory": 128, "hostname": "worker" },
+              { "name": "nginx",  "image": "DH_USER/multi-nginx:SHA",  "memory": 128, "hostname": "nginx",
+                "portMappings": [{ "hostPort": 80, "containerPort": 80 }], "essential": true }
+            ]
+          }
+          JSON
+          sed -i "s/DH_USER/$DH_USER/g" Dockerrun.aws.json
+          sed -i "s/SHA/$SHA/g" Dockerrun.aws.json
+          cat Dockerrun.aws.json
 
-      # # Zip only Dockerrun.aws.json (and optionally .ebextensions/)
-      # - name: Package app version
-      #   run: |
-      #     zip -r deploy-${{ github.sha }}.zip Dockerrun.aws.json .ebextensions 2>/dev/null || zip deploy-${{ github.sha }}.zip Dockerrun.aws.json
+      # Zip only Dockerrun.aws.json (and optionally .ebextensions/)
+      - name: Package app version
+        run: |
+          zip -r deploy-${{ github.sha }}.zip Dockerrun.aws.json .ebextensions 2>/dev/null || zip deploy-${{ github.sha }}.zip Dockerrun.aws.json
 
-      # # Upload bundle to S3 and create EB application version + deploy
-      # - name: Upload bundle to S3
-      #   run: |
-      #     aws s3 cp deploy-${{ github.sha }}.zip s3://${{ secrets.EB_S3_BUCKET }}/deploy-${{ github.sha }}.zip
+      # Upload bundle to S3 and create EB application version + deploy
+      - name: Upload bundle to S3
+        run: |
+          aws s3 cp deploy-${{ github.sha }}.zip s3://${{ secrets.EB_S3_BUCKET }}/deploy-${{ github.sha }}.zip
 
-      # - name: Create EB application version
-      #   run: |
-      #     aws elasticbeanstalk create-application-version \
-      #       --application-name "${{ secrets.EB_APPLICATION }}" \
-      #       --version-label "${{ github.sha }}" \
-      #       --source-bundle S3Bucket=${{ secrets.EB_S3_BUCKET }},S3Key=deploy-${{ github.sha }}.zip
+      - name: Create EB application version
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name "${{ secrets.EB_APPLICATION }}" \
+            --version-label "${{ github.sha }}" \
+            --source-bundle S3Bucket=${{ secrets.EB_S3_BUCKET }},S3Key=deploy-${{ github.sha }}.zip
 
-      # - name: Update EB environment
-      #   run: |
-      #     aws elasticbeanstalk update-environment \
-      #       --environment-name "${{ secrets.EB_ENVIRONMENT }}" \
-      #       --version-label "${{ github.sha }}"
+      - name: Update EB environment
+        run: |
+          aws elasticbeanstalk update-environment \
+            --environment-name "${{ secrets.EB_ENVIRONMENT }}" \
+            --version-label "${{ github.sha }}"
